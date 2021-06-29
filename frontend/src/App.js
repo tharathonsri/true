@@ -5,7 +5,7 @@ import TodoList from './component/TodoList';
 
 function App() {
   return (
-    <div style={{width:"480px",margin:"0 auto",textAlign:"center"}}>
+    <div style={{width:"640px",margin:"0 auto",textAlign:"center"}}>
       <h1>Todo List</h1>
       <TodoList/>
     </div>

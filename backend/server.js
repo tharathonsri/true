@@ -3,6 +3,8 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const app = new express()
 
+const port = 3001
+
 app.use(bodyParser.urlencoded({extended : true}))
 app.use(bodyParser.json())
 app.use(cors())
@@ -12,12 +14,12 @@ let todoList =[{
     status: 'active'
 }]*/
 var todoList = [];
-todoList.push({id: 1, name: "Go to school", status: "active"});
-todoList.push({id: 2, name: "Go shopping", status: "active"});
-todoList.push({id: 3, name: "Sleep", status: "active"});
-todoList.push({id: 4, name: "Do homework", status: "active"});
-todoList.push({id: 5, name: "Exercise", status: "active"});
-todoList.push({id: 6, name: "Coding", status: "active"});
+todoList.push({id: 1, name: "Go to school", status: "active", color:""});
+todoList.push({id: 2, name: "Go shopping", status: "active", color:""});
+todoList.push({id: 3, name: "Sleep", status: "active", color:""});
+todoList.push({id: 4, name: "Do homework", status: "active", color:""});
+todoList.push({id: 5, name: "Exercise", status: "active", color:""});
+todoList.push({id: 6, name: "Coding", status: "active", color:""});
 
 
 app.get('/',(req,res) =>{
@@ -46,10 +48,19 @@ app.put('/:id',(req,res) =>{
     let dataSet = todoList.filter(todo => todo.id != todoIndex)
     let dataUpdate = todoList.filter(todo => todo.id == todoIndex)
 
-    dataUpdate[0].status = req.body.status
-    dataUpdate[0].status === "complete" ? dataSet.push(dataUpdate[0]) : dataSet.unshift(dataUpdate[0]);
-    todoList = dataSet
-    res.send(todoList)
+    if(!req.body.status){
+        todoList.map(todo =>{
+            todo.color = todo.id == todoIndex ? req.body.color : todo.color
+            return todo
+        })
+        res.send(todoList)
+    }
+    else {
+        dataUpdate[0].status = req.body.status ? req.body.status : dataUpdate[0].status
+        dataUpdate[0].status === "complete" ? dataSet.push(dataUpdate[0]) : dataSet.unshift(dataUpdate[0]);
+        todoList = dataSet
+        res.send(todoList)
+    }    
 })
 
 app.delete('/',(req,res) =>{
@@ -66,6 +77,6 @@ app.delete('/:id',(req,res) =>{
     res.send(todoList)
 })
 
-app.listen(3001,()=>{
-    console.log('start')
+app.listen(port,()=>{
+    console.log('Listening on port : '+port)
 })

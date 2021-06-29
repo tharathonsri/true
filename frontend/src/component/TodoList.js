@@ -11,7 +11,15 @@ import Checkbox from '@material-ui/core/Checkbox';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
+import Box from '@material-ui/core/Box';
+
 import { TextField, Paper, Grid } from '@material-ui/core';
+
+
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -20,15 +28,18 @@ const useStyles = makeStyles((theme) => ({
   }));
 
 function TodoList(props){
-  var todoItems = [];
-  todoItems.push({id: 1, name: "learn react", status: "active"});
-  todoItems.push({id: 2, name: "Go shopping", status: "active"});
-  todoItems.push({id: 3, name: "buy flowers", status: "active"});
   
     const [dataList, setDataList] = useState([])
     const [inputValue, setInputValue] = useState('');
-    const [filterValue, setFilterValue] = useState('all');
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [filterColor, setFilterColor] = useState([]);
 
+    const colorList = [
+     { name:"red",code:'#ff0000'},
+     { name:"blue",code:'#0000ff'},
+     { name:"green",code:'#00ff00'},
+
+    ]
 
     const classes = useStyles();
 
@@ -47,7 +58,8 @@ function TodoList(props){
     const addTodo = (todo) => {
       axios.post('http://localhost:3001/',{
         name: todo, 
-        status: "active"
+        status: "active",
+        color: null
       })
         .then(result =>{
           setDataList(result.data)
@@ -101,6 +113,25 @@ function TodoList(props){
         })
     }
 
+    const changeColor = (todoIndex,todoColor) => {
+      axios.put('http://localhost:3001/'+todoIndex,{
+        color: todoColor
+      })
+      .then(result =>{
+        setDataList(result.data)
+      })
+      .catch(err =>{
+        console.log(err)
+      })
+    }
+
+    const handleFilterColor = (color) => {
+      const colorIndex = filterColor.indexOf(color);
+      const newFilterColor = [...filterColor];
+      colorIndex === -1 ? newFilterColor.push(color): newFilterColor.splice(colorIndex, 1)
+      setFilterColor(newFilterColor)
+    }
+
     useEffect(() => {
         axios.get('http://localhost:3001/')
         .then(result =>{
@@ -127,20 +158,33 @@ function TodoList(props){
             </Grid>
           </Grid>
              <List className={classes.root}>
-            {dataList.filter(data => filterValue === 'all' ? true : data.status === filterValue).map(data =>{
+            {dataList.filter(data => filterStatus === 'all' ? true : data.status === filterStatus).filter(data => filterColor.length === 0 ? true : filterColor.indexOf(data.color) !== -1).map(data =>{
                 const labelId = `checkbox-list-label-${data.id}`
                 return (
                     <ListItem key={labelId} dense>
                       <ListItemIcon onClick={e => markComplete(data.id)}>
                         <Checkbox
                           edge="start"
-                          checked={data.status == "complete" ? true : false}
+                          checked={data.status === "complete" ? true : false}
                           tabIndex={-1}
                           disableRipple
                           inputProps={{ 'aria-labelledby': labelId }}
                         />
                       </ListItemIcon>
                       <ListItemText id={labelId} primary={data.name} />
+                      <FormControl variant="outlined" className={classes.formControl}>
+                      <InputLabel id="demo-simple-select-outlined-label">color</InputLabel>
+                        <Select
+                          labelId="demo-simple-select-outlined-label"
+                          id="demo-simple-select-outlined"
+                          value={data.color ? data.color : "transparent"}                          
+                          label="color"
+                          onChange={e =>{changeColor(data.id,e.target.value)}}
+                        >
+                          <MenuItem value="transparent" ><Box bgcolor="transparent" p={2} /></MenuItem>
+                          {colorList.map(color => <MenuItem key={color.name} value={color.name} ><Box bgcolor={color.code} p={2} /></MenuItem>)}
+                        </Select>
+                      </FormControl>
                       <ListItemSecondaryAction onClick={e => removeTodo(data.id)}>
                         <IconButton edge="end" aria-label="delete">
                           <CloseIcon/>
@@ -175,14 +219,34 @@ function TodoList(props){
             <List className={classes.root}>
                  Filter by Status
                <ListItem button dense>
-                <ListItemText primary="All" onClick={e=> setFilterValue('all')}/>
+                <ListItemText primary="All" onClick={e=> setFilterStatus('all')}/>
                </ListItem>
                <ListItem button dense>
-                 <ListItemText primary="Active" onClick={e=> setFilterValue('active')}/>
+                 <ListItemText primary="Active" onClick={e=> setFilterStatus('active')}/>
                </ListItem>
                <ListItem button dense>
-                 <ListItemText primary="Complete" onClick={e=> setFilterValue('complete')}/>
+                 <ListItemText primary="Complete" onClick={e=> setFilterStatus('complete')}/>
                </ListItem>
+            </List>
+          </Grid>
+          <Grid item>
+          <List className={classes.root}>
+              Filter by Color
+              {colorList.map((color) => {
+                return (
+                  <ListItem key={color.name}>
+                    <ListItemIcon>
+                      <Checkbox
+                        edge="start"                        
+                        tabIndex={-1}
+                        disableRipple
+                        onClick={e => handleFilterColor(color.name)}
+                      />
+                    </ListItemIcon>
+                     <Box bgcolor={color.code} p={2} />
+                  </ListItem>
+                );
+              })}
             </List>
           </Grid>
         </Grid>
